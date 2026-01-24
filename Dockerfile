@@ -1,4 +1,4 @@
-FROM node:18 AS builder
+FROM node:20.19 AS builder
 
 WORKDIR /app
 
@@ -10,7 +10,7 @@ COPY src ./src
 
 RUN npm run build
 
-FROM node:18-slim AS runtime
+FROM node:20.19-slim AS runtime
 
 ENV NODE_ENV=production
 WORKDIR /app
