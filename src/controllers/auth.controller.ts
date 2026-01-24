@@ -5,6 +5,8 @@ import User from '../Models/User.js';
 import type { payload } from '../common/IPayload.js';
 import { isEmail, isNonEmptyString } from '../utils/validators.js';
 import { env } from '../config/env.js';
+import { asyncHandler } from '../utils/asyncHandler.js';
+import { AppError } from '../utils/AppError.js';
 
 const getCookieOptions = (maxAge: number, path: string) => {
     return {
@@ -47,25 +49,28 @@ const generateTokens = (data: payload) => {
     return { accessToken, refreshToken };
 };
 
-export const login = async (req: Request, res: Response) => {
+export const login = asyncHandler(async (req: Request, res: Response) => {
     const { email, password } = req.body as { email?: string; password?: string };
 
     if (!isEmail(email) || !isNonEmptyString(password)) {
-        return res.status(400).json({ success: false, message: 'بيانات غير صالحة' });
+        res.status(400).json({ success: false, message: 'بيانات غير صالحة' });
+        return;
     }
 
     const user = await User.findOne({ email }).exec();
     if (!user) {
-        return res
+        res
             .status(401)
             .json({ success: false, message: 'البريد الإلكتروني أو كلمة المرور غير صحيحة' });
+        return;
     }
 
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
-        return res
+        res
             .status(401)
             .json({ success: false, message: 'البريد الإلكتروني أو كلمة المرور غير صحيحة' });
+        return;
     }
 
     const data: payload = {
@@ -80,19 +85,20 @@ export const login = async (req: Request, res: Response) => {
         setRefreshTokenCookie(res, refreshToken);
         setAccessTokenCookie(res, accessToken);
 
-        return res.json({
+        res.json({
             success: true,
             message: 'تم تسجيل الدخول بنجاح',
             data: { name: user.name, role: user.role },
         });
-    } catch (_err) {
-        return res.status(500).json({ success: false, message: 'خطأ داخلي في الخادم' });
+    } catch (err) {
+        throw new AppError('خطأ داخلي في الخادم', 500, err);
     }
-};
+});
 
-export const getAccessToken = (req: Request, res: Response) => {
+export const getAccessToken = asyncHandler(async (req: Request, res: Response) => {
     if (!req.payload) {
-        return res.status(403).json({ success: false, message: 'الجلسة غير صالحة' });
+        res.status(403).json({ success: false, message: 'الجلسة غير صالحة' });
+        return;
     }
 
     try {
@@ -100,8 +106,8 @@ export const getAccessToken = (req: Request, res: Response) => {
         setRefreshTokenCookie(res, refreshToken);
         setAccessTokenCookie(res, accessToken);
 
-        return res.json({ success: true, message: 'تم تحديث الجلسة بنجاح' });
-    } catch (_err) {
-        return res.status(500).json({ success: false, message: 'خطأ داخلي في الخادم' });
+        res.json({ success: true, message: 'تم تحديث الجلسة بنجاح' });
+    } catch (err) {
+        throw new AppError('خطأ داخلي في الخادم', 500, err);
     }
-};
+});
