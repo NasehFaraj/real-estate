@@ -1,0 +1,51 @@
+{
+    "name": "real-estate",
+    "version": "1.0.0",
+    "description": "",
+    "main": "dist/server.js",
+    "type": "module",
+    "scripts": {
+        "dev": "ts-node --esm src/server.ts",
+        "build": "tsc -p tsconfig.json",
+        "start": "node dist/server.js",
+        "lint": "eslint .",
+        "typecheck": "tsc -p tsconfig.json --noEmit",
+        "check": "npm run format && npm run lint && npm run typecheck",
+        "lint:fix": "eslint . --fix",
+        "format": "prettier --write .",
+        "format:check": "prettier --check .",
+        "test": "npm run build && node --test tests/health.test.js"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+ssh://git@github.com/NasehFaraj/real-estate.git"
+    },
+    "author": "NasehFaraj",
+    "license": "ISC",
+    "bugs": {
+        "url": "https://github.com/NasehFaraj/real-estate/issues"
+    },
+    "homepage": "https://github.com/NasehFaraj/real-estate#readme",
+    "dependencies": {
+        "bcrypt": "^6.0.0",
+        "cookie-parser": "^1.4.7",
+        "dotenv": "^17.2.3",
+        "express": "^5.2.1",
+        "jsonwebtoken": "^9.0.2",
+        "mongoose": "^9.1.5"
+    },
+    "devDependencies": {
+        "@types/bcrypt": "^6.0.0",
+        "@types/cookie-parser": "^1.4.9",
+        "@types/jsonwebtoken": "^9.0.10",
+        "@types/node": "^24.10.9",
+        "@typescript-eslint/eslint-plugin": "^8.53.1",
+        "@typescript-eslint/parser": "^8.53.1",
+        "eslint": "^9.39.2",
+        "eslint-config-prettier": "^10.1.8",
+        "prettier": "^3.8.1",
+        "ts-node": "^10.9.2",
+        "tsx": "^4.21.0",
+        "typescript": "^5.9.3"
+    }
+}
