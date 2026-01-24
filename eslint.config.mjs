@@ -7,6 +7,18 @@ export default [
     { ignores: ['dist', 'node_modules'] },
     js.configs.recommended,
     {
+        files: ['**/*.js'],
+        languageOptions: {
+            globals: {
+                console: 'readonly',
+                process: 'readonly',
+            },
+        },
+        rules: {
+            'no-undef': 'off',
+        },
+    },
+    {
         files: ['**/*.ts'],
         languageOptions: {
             parser: tsParser,
