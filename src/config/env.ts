@@ -27,7 +27,6 @@ const toSameSite = (value: string | undefined): SameSiteValue => {
 export const env = {
     nodeEnv: process.env.NODE_ENV ?? 'development',
     port: toNumber(process.env.PORT, 3000),
-    mongoUri: requireEnv('MONGO_URI'),
     jwtAccessSecret: requireEnv('JWT_ACCESS_SECRET'),
     jwtRefreshSecret: requireEnv('JWT_REFRESH_SECRET'),
     accessExpiresIn: process.env.ACCESS_EXPIRESIN ?? '15m',

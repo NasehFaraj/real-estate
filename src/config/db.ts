@@ -1,9 +1,11 @@
 import mongoose from 'mongoose';
-import { env } from './env.js';
 
 export const connectMongo = async (): Promise<void> => {
+    const mongoUri = process.env.MONGO_URI ?? 'mongodb://127.0.0.1:27017/realestate';
     try {
-        await mongoose.connect(env.mongoUri);
+        const sanitized = mongoUri.replace(/:\/\/([^@]+)@/, '://<credentials>@');
+        console.log(`Connecting to MongoDB: ${sanitized}`);
+        await mongoose.connect(mongoUri);
         console.log('MongoDB connected');
     } catch (err) {
         console.error('MongoDB connection error', err);
