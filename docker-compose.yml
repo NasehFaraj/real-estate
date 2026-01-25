@@ -15,10 +15,18 @@ services:
         cap_drop:
             - ALL
         healthcheck:
-            test: ['CMD', 'mongosh', '--quiet', '--eval', "db.adminCommand('ping')"]
-            interval: 10s
+            test:
+                [
+                    'CMD',
+                    'mongosh',
+                    '--quiet',
+                    'mongodb://127.0.0.1:27017/admin',
+                    '--eval',
+                    "db.runCommand({ ping: 1 })",
+                ]
+            interval: 5s
             timeout: 5s
-            retries: 5
+            retries: 30
         networks:
             - app_net
 
