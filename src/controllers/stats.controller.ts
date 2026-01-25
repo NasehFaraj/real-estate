@@ -2,6 +2,7 @@ import Offer from '../Models/Offer.js';
 import Request from '../Models/Request.js';
 import Match from '../Models/Match.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
+import { buildFilter } from '../utils/filters.js';
 
 export const getStats = asyncHandler(async (_req, res) => {
     const [offers, requests, matches] = await Promise.all([
@@ -18,7 +19,27 @@ export const getStats = asyncHandler(async (_req, res) => {
 });
 
 export const getMostRequestedAreas = asyncHandler(async (_req, res) => {
+    const { filter, error } = buildFilter(
+        {
+            city: 'string',
+            district: 'string',
+            propertyType: 'string',
+            usage: 'string',
+            status: 'string',
+            priority: 'string',
+            budget: 'number',
+            createdAt: 'date',
+        },
+        _req.query
+    );
+
+    if (error) {
+        res.status(400).json({ success: false, message: error });
+        return;
+    }
+
     const results = await Request.aggregate([
+        { $match: filter ?? {} },
         {
             $group: {
                 _id: { city: '$city', district: '$district' },
@@ -35,7 +56,7 @@ export const getMostRequestedAreas = asyncHandler(async (_req, res) => {
         count: item.count,
     }));
 
-    res.json({ success: true, message: 'تم جلب البيانات بنجاح', data });
+    res.json({ success: true, message: 'تم جلب البيانات بنجاح', data: { items: data } });
 });
 
 export const getMostActiveBrokers = asyncHandler(async (_req, res) => {
@@ -65,4 +86,45 @@ export const getMostActiveBrokers = asyncHandler(async (_req, res) => {
     }));
 
     res.json({ success: true, message: 'تم جلب البيانات بنجاح', data });
+});
+
+export const getLeastRequestedAreas = asyncHandler(async (req, res) => {
+    const { filter, error } = buildFilter(
+        {
+            city: 'string',
+            district: 'string',
+            propertyType: 'string',
+            usage: 'string',
+            status: 'string',
+            priority: 'string',
+            budget: 'number',
+            createdAt: 'date',
+        },
+        req.query
+    );
+
+    if (error) {
+        res.status(400).json({ success: false, message: error });
+        return;
+    }
+
+    const results = await Request.aggregate([
+        { $match: filter ?? {} },
+        {
+            $group: {
+                _id: { city: '$city', district: '$district' },
+                count: { $sum: 1 },
+            },
+        },
+        { $sort: { count: 1 } },
+        { $limit: 10 },
+    ]);
+
+    const items = results.map((item) => ({
+        city: item._id.city,
+        district: item._id.district,
+        count: item.count,
+    }));
+
+    res.json({ success: true, message: 'تم جلب البيانات بنجاح', data: { items } });
 });

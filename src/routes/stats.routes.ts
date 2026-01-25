@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { Role } from '../common/Role.js';
 import { accessMiddleware } from '../middlewares/access.middleware.js';
 import {
+    getLeastRequestedAreas,
     getMostActiveBrokers,
     getMostRequestedAreas,
     getStats,
@@ -14,6 +15,11 @@ router.get(
     '/most-requested-areas',
     accessMiddleware([Role.ADMIN, Role.MANAGER]),
     getMostRequestedAreas
+);
+router.get(
+    '/least-requested-areas',
+    accessMiddleware([Role.ADMIN, Role.MANAGER]),
+    getLeastRequestedAreas
 );
 router.get(
     '/most-active-brokers',
