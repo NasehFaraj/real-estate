@@ -24,18 +24,20 @@ export const createUser = async (input: CreateUserInput) => {
     return user;
 };
 
+export type TestAgent = ReturnType<typeof request.agent>;
+
 export const loginAgent = async (email: string, password: string) => {
     const agent = request.agent(app);
     await agent.post('/api/auth/login').send({ email, password });
     return agent;
 };
 
-export const createOffer = async (agent: request.SuperAgentTest, body: Record<string, unknown>) => {
+export const createOffer = async (agent: TestAgent, body: Record<string, unknown>) => {
     const res = await agent.post('/api/offers').send(body);
     return res;
 };
 
-export const createRequest = async (agent: request.SuperAgentTest, body: Record<string, unknown>) => {
+export const createRequest = async (agent: TestAgent, body: Record<string, unknown>) => {
     const res = await agent.post('/api/requests').send(body);
     return res;
 };
@@ -47,13 +49,14 @@ export const createMatch = async (data: {
     status?: string;
     score?: number;
 }) => {
-    return Match.create({
+    const payload = {
         offerId: data.offerId,
         requestId: data.requestId,
         brokerId: data.brokerId,
-        status: data.status,
-        score: data.score,
-    });
+        ...(data.status ? { status: data.status } : {}),
+        ...(data.score !== undefined ? { score: data.score } : {}),
+    };
+    return Match.create(payload);
 };
 
 export { app, Offer, RequestModel };
