@@ -64,11 +64,7 @@ export const getMostActiveBrokers = asyncHandler(async (_req, res) => {
         {
             $group: {
                 _id: {
-                    $cond: [
-                        { $ifNull: ['$brokerId', false] },
-                        '$brokerId',
-                        '$brokerName',
-                    ],
+                    $cond: [{ $ifNull: ['$brokerId', false] }, '$brokerId', '$brokerName'],
                 },
                 brokerId: { $first: '$brokerId' },
                 brokerName: { $first: '$brokerName' },

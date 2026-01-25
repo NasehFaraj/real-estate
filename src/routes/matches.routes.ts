@@ -1,11 +1,7 @@
 import { Router } from 'express';
 import { Role } from '../common/Role.js';
 import { accessMiddleware } from '../middlewares/access.middleware.js';
-import {
-    getMatchById,
-    listMatches,
-    listMyMatches,
-} from '../controllers/matches.controller.js';
+import { getMatchById, listMatches, listMyMatches } from '../controllers/matches.controller.js';
 
 /**
  * @openapi

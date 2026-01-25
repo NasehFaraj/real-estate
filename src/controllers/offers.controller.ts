@@ -25,7 +25,8 @@ export const createOffer = asyncHandler(async (req, res) => {
 
     const body = req.body as Record<string, unknown>;
     const areaFromValue =
-        body.areaFrom ?? (body.areaForm !== undefined && body.areaFrom === undefined ? body.areaForm : undefined);
+        body.areaFrom ??
+        (body.areaForm !== undefined && body.areaFrom === undefined ? body.areaForm : undefined);
 
     const propertyType = body.propertyType;
     const category = body.category;
@@ -37,8 +38,7 @@ export const createOffer = asyncHandler(async (req, res) => {
     const areaTo = parseNumber(body.areaTo);
     const pricePerMeter = parseNumber(body.pricePerMeter);
     const priceTotal = parseNumber(body.priceTotal);
-    const offerStatus =
-        body.offerStatus === undefined ? true : parseBoolean(body.offerStatus);
+    const offerStatus = body.offerStatus === undefined ? true : parseBoolean(body.offerStatus);
 
     if (
         !isNonEmptyString(propertyType) ||

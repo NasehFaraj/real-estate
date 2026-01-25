@@ -53,7 +53,9 @@ describe('Filtering and pagination', () => {
         const resBool = await manager.get('/api/offers?offerStatus=false');
         expect(resBool.body.data.items.length).toBe(1);
 
-        const resDate = await manager.get(`/api/offers?createdAt_min=${encodeURIComponent(createdAt)}`);
+        const resDate = await manager.get(
+            `/api/offers?createdAt_min=${encodeURIComponent(createdAt)}`
+        );
         expect(resDate.body.data.items.length).toBe(2);
 
         await createRequest(manager, {

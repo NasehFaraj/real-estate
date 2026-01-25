@@ -23,15 +23,16 @@ const setAccessTokenCookie = (res: Response, token: string) => {
 };
 
 const setRefreshTokenCookie = (res: Response, token: string) => {
-    res.cookie(env.refreshCookieName, token, getCookieOptions(env.refreshCookieMaxAgeMs, '/api/auth'));
+    res.cookie(
+        env.refreshCookieName,
+        token,
+        getCookieOptions(env.refreshCookieMaxAgeMs, '/api/auth')
+    );
 };
 
 const generateTokens = (data: payload) => {
     const algorithm = env.algorithm as jwt.Algorithm;
-    const accessExpiresIn = env.accessExpiresIn as Exclude<
-        jwt.SignOptions['expiresIn'],
-        undefined
-    >;
+    const accessExpiresIn = env.accessExpiresIn as Exclude<jwt.SignOptions['expiresIn'], undefined>;
     const refreshExpiresIn = env.refreshExpiresIn as Exclude<
         jwt.SignOptions['expiresIn'],
         undefined
@@ -59,17 +60,19 @@ export const login = asyncHandler(async (req: Request, res: Response) => {
 
     const user = await User.findOne({ email }).exec();
     if (!user) {
-        res
-            .status(401)
-            .json({ success: false, message: 'البريد الإلكتروني أو كلمة المرور غير صحيحة' });
+        res.status(401).json({
+            success: false,
+            message: 'البريد الإلكتروني أو كلمة المرور غير صحيحة',
+        });
         return;
     }
 
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
-        res
-            .status(401)
-            .json({ success: false, message: 'البريد الإلكتروني أو كلمة المرور غير صحيحة' });
+        res.status(401).json({
+            success: false,
+            message: 'البريد الإلكتروني أو كلمة المرور غير صحيحة',
+        });
         return;
     }
 
