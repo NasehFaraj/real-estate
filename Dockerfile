@@ -19,6 +19,7 @@ COPY package*.json ./
 RUN npm ci --omit=dev
 
 RUN useradd -u 10001 -m appuser
+RUN mkdir -p /tmp /app/tmp /app/logs && chmod 1777 /tmp
 
 COPY --from=builder /app/dist ./dist
 
