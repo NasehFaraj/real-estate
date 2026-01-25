@@ -5,7 +5,10 @@ export const connectMongo = async (): Promise<void> => {
     try {
         const sanitized = mongoUri.replace(/:\/\/([^@]+)@/, '://<credentials>@');
         console.log(`Connecting to MongoDB: ${sanitized}`);
-        await mongoose.connect(mongoUri);
+        await mongoose.connect(mongoUri, {
+            serverSelectionTimeoutMS: 5000,
+            connectTimeoutMS: 5000,
+        });
         console.log('MongoDB connected');
     } catch (err) {
         console.error('MongoDB connection error', err);
