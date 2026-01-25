@@ -7,18 +7,13 @@ const logServerError = (req: Request, status: number, err: AppError | Error) => 
     const url = req.originalUrl ?? req.url;
     const details = err instanceof AppError ? err.details : undefined;
 
-    console.error('❌ SERVER ERROR');
+    console.error('SERVER ERROR');
     console.error(`[${requestId}] ${method} ${url} -> ${status}`);
     console.error(err.stack || err.message);
     if (details) console.error('Details:', details);
 };
 
-export const errorMiddleware = (
-    err: unknown,
-    req: Request,
-    res: Response,
-    _next: NextFunction
-) => {
+export const errorMiddleware = (err: unknown, req: Request, res: Response, _next: NextFunction) => {
     if (err instanceof AppError) {
         if (err.statusCode >= 500) {
             logServerError(req, err.statusCode, err);
