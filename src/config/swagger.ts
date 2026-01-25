@@ -114,15 +114,7 @@ export const swaggerSpec = swaggerJSDoc({
         },
         security: [{ cookieAuth: [] }],
     },
-    apis: [
-        'src/routes/auth.routes.ts',
-        'src/routes/users.routes.ts',
-        'src/routes/offers.routes.ts',
-        'src/routes/requests.routes.ts',
-        'src/routes/matches.routes.ts',
-        'src/routes/stats.routes.ts',
-        'src/routes/health.routes.ts',
-    ],
+    apis: ['./src/routes/**/*.ts', './src/controllers/**/*.ts'],
 });
 
 export const swaggerUiMiddleware = swaggerUi.serve;

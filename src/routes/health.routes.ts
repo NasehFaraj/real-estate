@@ -5,7 +5,6 @@ import { getDbState } from '../config/db.js';
  * @openapi
  * /api/health:
  *   get:
- *     tags: [Health]
  *     summary: Health check
  *     security: []
  *     responses:

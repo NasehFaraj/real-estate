@@ -21,11 +21,9 @@ import { refreshAuth } from '../middlewares/auth.middleware.js';
  *     responses:
  *       200:
  *         description: Success
- *       400:
- *         description: Invalid input
- *       401:
- *         description: Unauthorized
- *
+ */
+/**
+ * @openapi
  * /api/auth/refresh:
  *   post:
  *     tags: [Auth]
@@ -34,8 +32,6 @@ import { refreshAuth } from '../middlewares/auth.middleware.js';
  *     responses:
  *       200:
  *         description: Success
- *       403:
- *         description: Forbidden
  */
 const router = Router();
 
