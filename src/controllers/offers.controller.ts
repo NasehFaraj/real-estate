@@ -3,6 +3,7 @@ import Offer from '../Models/Offer.js';
 import { Role } from '../common/Role.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { isNonEmptyString, isValidNumber } from '../utils/validators.js';
+import { buildFilter } from '../utils/filters.js';
 
 const parseNumber = (value: unknown): number | null => {
     if (!isValidNumber(value)) return null;
@@ -92,57 +93,55 @@ export const createOffer = asyncHandler(async (req, res) => {
     res.status(201).json({ success: true, message: 'تمت الإضافة بنجاح', data: offer });
 });
 
-const buildOfferFilters = (query: Record<string, unknown>) => {
-    const filter: Record<string, unknown> = {};
+const allowedOfferFields = {
+    propertyType: 'string',
+    category: 'string',
+    status: 'string',
+    city: 'string',
+    district: 'string',
+    coordinates: 'string',
+    brokerName: 'string',
+    brokerId: 'objectId',
+    areaFrom: 'number',
+    areaTo: 'number',
+    pricePerMeter: 'number',
+    priceTotal: 'number',
+    offerStatus: 'boolean',
+    createdAt: 'date',
+} as const;
 
-    if (isNonEmptyString(query.propertyType)) filter.propertyType = query.propertyType;
-    if (isNonEmptyString(query.category)) filter.category = query.category;
-    if (isNonEmptyString(query.status)) filter.status = query.status;
-    if (isNonEmptyString(query.city)) filter.city = query.city;
-    if (isNonEmptyString(query.district)) filter.district = query.district;
-
-    if (query.offerStatus !== undefined) {
-        const parsed = parseBoolean(query.offerStatus);
-        if (parsed === null) return { error: 'بيانات غير صالحة' };
-        filter.offerStatus = parsed;
-    }
-
-    if (query.areaFromMin !== undefined) {
-        const value = parseNumber(query.areaFromMin);
-        if (value === null) return { error: 'بيانات غير صالحة' };
-        filter.areaFrom = { ...(filter.areaFrom as object), $gte: value };
-    }
-
-    if (query.areaToMax !== undefined) {
-        const value = parseNumber(query.areaToMax);
-        if (value === null) return { error: 'بيانات غير صالحة' };
-        filter.areaTo = { ...(filter.areaTo as object), $lte: value };
-    }
-
-    if (query.priceTotalMax !== undefined) {
-        const value = parseNumber(query.priceTotalMax);
-        if (value === null) return { error: 'بيانات غير صالحة' };
-        filter.priceTotal = { ...(filter.priceTotal as object), $lte: value };
-    }
-
-    if (query.pricePerMeterMax !== undefined) {
-        const value = parseNumber(query.pricePerMeterMax);
-        if (value === null) return { error: 'بيانات غير صالحة' };
-        filter.pricePerMeter = { ...(filter.pricePerMeter as object), $lte: value };
-    }
-
-    return { filter };
+const getPagination = (query: Record<string, unknown>) => {
+    const page = isValidNumber(query.page) ? Math.max(1, Number(query.page)) : 1;
+    const limitRaw = isValidNumber(query.limit) ? Number(query.limit) : 20;
+    const limit = Math.min(100, Math.max(1, limitRaw));
+    const sortBy = isNonEmptyString(query.sortBy) ? String(query.sortBy) : 'createdAt';
+    const sortDir = query.sortDir === 'asc' ? 'asc' : 'desc';
+    return { page, limit, sortBy, sortDir };
 };
 
 export const listOffers = asyncHandler(async (req, res) => {
-    const { filter, error } = buildOfferFilters(req.query);
+    const { filter, error } = buildFilter(allowedOfferFields, req.query);
     if (error) {
         res.status(400).json({ success: false, message: error });
         return;
     }
 
-    const offers = await Offer.find(filter ?? {}).lean();
-    res.json({ success: true, message: 'تم جلب البيانات بنجاح', data: offers });
+    const { page, limit, sortBy, sortDir } = getPagination(req.query);
+    const finalFilter = filter ?? {};
+    const [items, total] = await Promise.all([
+        Offer.find(finalFilter)
+            .sort({ [sortBy]: sortDir === 'asc' ? 1 : -1 })
+            .skip((page - 1) * limit)
+            .limit(limit)
+            .lean(),
+        Offer.countDocuments(finalFilter),
+    ]);
+
+    res.json({
+        success: true,
+        message: 'تم جلب البيانات بنجاح',
+        data: { items, page, limit, total },
+    });
 });
 
 export const listMyOffers = asyncHandler(async (req, res) => {
@@ -152,14 +151,28 @@ export const listMyOffers = asyncHandler(async (req, res) => {
         return;
     }
 
-    const { filter, error } = buildOfferFilters(req.query);
+    const { filter, error } = buildFilter(allowedOfferFields, req.query);
     if (error) {
         res.status(400).json({ success: false, message: error });
         return;
     }
 
-    const offers = await Offer.find({ ...(filter ?? {}), brokerId: payload.id }).lean();
-    res.json({ success: true, message: 'تم جلب البيانات بنجاح', data: offers });
+    const { page, limit, sortBy, sortDir } = getPagination(req.query);
+    const finalFilter = { ...(filter ?? {}), brokerId: payload.id };
+    const [items, total] = await Promise.all([
+        Offer.find(finalFilter)
+            .sort({ [sortBy]: sortDir === 'asc' ? 1 : -1 })
+            .skip((page - 1) * limit)
+            .limit(limit)
+            .lean(),
+        Offer.countDocuments(finalFilter),
+    ]);
+
+    res.json({
+        success: true,
+        message: 'تم جلب البيانات بنجاح',
+        data: { items, page, limit, total },
+    });
 });
 
 export const getOfferById = asyncHandler(async (req, res) => {

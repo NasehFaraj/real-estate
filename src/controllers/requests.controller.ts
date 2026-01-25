@@ -3,6 +3,7 @@ import Request from '../Models/Request.js';
 import { Role } from '../common/Role.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { isNonEmptyString, isValidNumber } from '../utils/validators.js';
+import { buildFilter } from '../utils/filters.js';
 
 const parseNumber = (value: unknown): number | null => {
     if (!isValidNumber(value)) return null;
@@ -77,46 +78,53 @@ export const createRequest = asyncHandler(async (req, res) => {
     res.status(201).json({ success: true, message: 'تمت الإضافة بنجاح', data: request });
 });
 
-const buildRequestFilters = (query: Record<string, unknown>) => {
-    const filter: Record<string, unknown> = {};
+const allowedRequestFields = {
+    propertyType: 'string',
+    usage: 'string',
+    status: 'string',
+    priority: 'string',
+    city: 'string',
+    district: 'string',
+    brokerName: 'string',
+    brokerId: 'objectId',
+    minArea: 'number',
+    maxArea: 'number',
+    budget: 'number',
+    createdAt: 'date',
+} as const;
 
-    if (isNonEmptyString(query.propertyType)) filter.propertyType = query.propertyType;
-    if (isNonEmptyString(query.usage)) filter.usage = query.usage;
-    if (isNonEmptyString(query.status)) filter.status = query.status;
-    if (isNonEmptyString(query.priority)) filter.priority = query.priority;
-    if (isNonEmptyString(query.city)) filter.city = query.city;
-    if (isNonEmptyString(query.district)) filter.district = query.district;
-
-    if (query.minAreaMin !== undefined) {
-        const value = parseNumber(query.minAreaMin);
-        if (value === null) return { error: 'بيانات غير صالحة' };
-        filter.minArea = { ...(filter.minArea as object), $gte: value };
-    }
-
-    if (query.maxAreaMax !== undefined) {
-        const value = parseNumber(query.maxAreaMax);
-        if (value === null) return { error: 'بيانات غير صالحة' };
-        filter.maxArea = { ...(filter.maxArea as object), $lte: value };
-    }
-
-    if (query.budgetMax !== undefined) {
-        const value = parseNumber(query.budgetMax);
-        if (value === null) return { error: 'بيانات غير صالحة' };
-        filter.budget = { ...(filter.budget as object), $lte: value };
-    }
-
-    return { filter };
+const getPagination = (query: Record<string, unknown>) => {
+    const page = isValidNumber(query.page) ? Math.max(1, Number(query.page)) : 1;
+    const limitRaw = isValidNumber(query.limit) ? Number(query.limit) : 20;
+    const limit = Math.min(100, Math.max(1, limitRaw));
+    const sortBy = isNonEmptyString(query.sortBy) ? String(query.sortBy) : 'createdAt';
+    const sortDir = query.sortDir === 'asc' ? 'asc' : 'desc';
+    return { page, limit, sortBy, sortDir };
 };
 
 export const listRequests = asyncHandler(async (req, res) => {
-    const { filter, error } = buildRequestFilters(req.query);
+    const { filter, error } = buildFilter(allowedRequestFields, req.query);
     if (error) {
         res.status(400).json({ success: false, message: error });
         return;
     }
 
-    const requests = await Request.find(filter ?? {}).lean();
-    res.json({ success: true, message: 'تم جلب البيانات بنجاح', data: requests });
+    const { page, limit, sortBy, sortDir } = getPagination(req.query);
+    const finalFilter = filter ?? {};
+    const [items, total] = await Promise.all([
+        Request.find(finalFilter)
+            .sort({ [sortBy]: sortDir === 'asc' ? 1 : -1 })
+            .skip((page - 1) * limit)
+            .limit(limit)
+            .lean(),
+        Request.countDocuments(finalFilter),
+    ]);
+
+    res.json({
+        success: true,
+        message: 'تم جلب البيانات بنجاح',
+        data: { items, page, limit, total },
+    });
 });
 
 export const listMyRequests = asyncHandler(async (req, res) => {
@@ -126,14 +134,28 @@ export const listMyRequests = asyncHandler(async (req, res) => {
         return;
     }
 
-    const { filter, error } = buildRequestFilters(req.query);
+    const { filter, error } = buildFilter(allowedRequestFields, req.query);
     if (error) {
         res.status(400).json({ success: false, message: error });
         return;
     }
 
-    const requests = await Request.find({ ...(filter ?? {}), brokerId: payload.id }).lean();
-    res.json({ success: true, message: 'تم جلب البيانات بنجاح', data: requests });
+    const { page, limit, sortBy, sortDir } = getPagination(req.query);
+    const finalFilter = { ...(filter ?? {}), brokerId: payload.id };
+    const [items, total] = await Promise.all([
+        Request.find(finalFilter)
+            .sort({ [sortBy]: sortDir === 'asc' ? 1 : -1 })
+            .skip((page - 1) * limit)
+            .limit(limit)
+            .lean(),
+        Request.countDocuments(finalFilter),
+    ]);
+
+    res.json({
+        success: true,
+        message: 'تم جلب البيانات بنجاح',
+        data: { items, page, limit, total },
+    });
 });
 
 export const getRequestById = asyncHandler(async (req, res) => {
