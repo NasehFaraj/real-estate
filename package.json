@@ -10,7 +10,8 @@
         "start": "node dist/server.js",
         "typecheck": "tsc -p tsconfig.json --noEmit",
         "check": "npm run format && npm run lint && npm run typecheck",
-        "test": "npm run build && node --test tests/health.test.js"
+        "test": "vitest run",
+        "test:watch": "vitest"
     },
     "repository": {
         "type": "git",
@@ -35,13 +36,16 @@
         "@types/cookie-parser": "^1.4.9",
         "@types/jsonwebtoken": "^9.0.10",
         "@types/node": "^24.10.9",
+        "@types/supertest": "^6.0.3",
         "@typescript-eslint/eslint-plugin": "^8.53.1",
         "@typescript-eslint/parser": "^8.53.1",
         "eslint": "^9.39.2",
         "eslint-config-prettier": "^10.1.8",
         "prettier": "^3.8.1",
+        "supertest": "^7.0.0",
         "ts-node": "^10.9.2",
         "tsx": "^4.21.0",
+        "vitest": "^3.2.2",
         "typescript": "^5.9.3"
     }
 }
