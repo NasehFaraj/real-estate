@@ -11,6 +11,14 @@ export const swaggerSpec = swaggerJSDoc({
             version: '1.0.0',
             description: 'API for offers, requests, matches, users, stats, auth',
         },
+        tags: [
+            { name: 'Auth' },
+            { name: 'Users' },
+            { name: 'Offers' },
+            { name: 'Requests' },
+            { name: 'Matches' },
+            { name: 'Stats' },
+        ],
         components: {
             securitySchemes: {
                 cookieAuth: {
