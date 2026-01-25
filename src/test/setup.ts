@@ -1,8 +1,7 @@
 import { afterAll, beforeAll, beforeEach } from 'vitest';
 import mongoose from 'mongoose';
 import { execSync } from 'node:child_process';
-import { existsSync, mkdirSync, openSync, closeSync, writeFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { accessSync, constants } from 'node:fs';
 
 beforeAll(async () => {
     console.log('[test-setup] start');
@@ -11,31 +10,60 @@ beforeAll(async () => {
     process.env.JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET ?? 'test-refresh-secret';
     process.env.ACCESS_COOKIE_NAME = process.env.ACCESS_COOKIE_NAME ?? 'access_token';
     process.env.REFRESH_COOKIE_NAME = process.env.REFRESH_COOKIE_NAME ?? 'refresh_token';
-    process.env.MONGO_URI = 'mongodb://127.0.0.1:27017/realestate_test';
-    const cacheDir = join(process.cwd(), '.cache');
-    const lockFile = join(cacheDir, 'test-mongo.lock');
-    const readyFile = join(cacheDir, 'test-mongo.ready');
-    mkdirSync(cacheDir, { recursive: true });
+    try {
+        accessSync('/var/run/docker.sock', constants.R_OK | constants.W_OK);
+        execSync('docker ps', { stdio: 'ignore' });
+    } catch (err) {
+        console.error('[test-setup] docker daemon unavailable', err);
+        throw err;
+    }
+    console.log('[test-setup] starting mongo via docker compose');
+    execSync('docker compose up -d --no-recreate mongo', { stdio: 'inherit' });
 
-    if (!existsSync(readyFile)) {
-        let lockFd: number | null = null;
+    console.log('[test-setup] waiting for mongo');
+    const maxAttempts = 60;
+    const readContainerEnv = (key: string): string => {
         try {
-            lockFd = openSync(lockFile, 'wx');
-            console.log('[test-setup] starting mongo via docker compose');
-            execSync('docker compose up -d --no-recreate mongo', { stdio: 'inherit' });
-            writeFileSync(readyFile, 'ready');
+            return execSync(`docker compose exec -T mongo printenv ${key}`, {
+                stdio: 'pipe',
+            })
+                .toString()
+                .trim();
         } catch {
-            console.log('[test-setup] waiting for mongo lock');
-        } finally {
-            if (lockFd !== null) closeSync(lockFd);
+            return '';
+        }
+    };
+    const mongoUser = readContainerEnv('MONGO_INITDB_ROOT_USERNAME');
+    const mongoPass = readContainerEnv('MONGO_INITDB_ROOT_PASSWORD');
+    const hasAuth = Boolean(mongoUser && mongoPass);
+    const pingUri = hasAuth
+        ? `mongodb://${mongoUser}:${mongoPass}@127.0.0.1:27017/admin?authSource=admin`
+        : 'mongodb://127.0.0.1:27017/admin';
+    const uri = hasAuth
+        ? `mongodb://${mongoUser}:${mongoPass}@127.0.0.1:27017/realestate_test?authSource=admin`
+        : 'mongodb://127.0.0.1:27017/realestate_test';
+    process.env.MONGO_URI = uri;
+    let lastError: unknown;
+    for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+        try {
+            execSync(
+                `docker compose exec -T mongo mongosh --quiet "${pingUri}" --eval "db.runCommand({ ping: 1 })"`,
+                { stdio: 'ignore' }
+            );
+            break;
+        } catch (err) {
+            lastError = err;
+            console.log(`[test-setup] ping retry ${attempt}/${maxAttempts}`);
+            await new Promise((resolve) => setTimeout(resolve, 1000));
         }
     }
 
-    console.log('[test-setup] waiting for mongo');
-    const uri = process.env.MONGO_URI;
+    if (lastError) {
+        console.log('[test-setup] attempting mongoose connect');
+    }
+
     let connected = false;
-    let lastError: unknown;
-    for (let attempt = 1; attempt <= 30; attempt += 1) {
+    for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
         try {
             await mongoose.connect(uri, {
                 serverSelectionTimeoutMS: 3000,
@@ -45,7 +73,7 @@ beforeAll(async () => {
             break;
         } catch (err) {
             lastError = err;
-            console.log(`[test-setup] connect retry ${attempt}/30`);
+            console.log(`[test-setup] connect retry ${attempt}/${maxAttempts}`);
             await new Promise((resolve) => setTimeout(resolve, 1000));
         }
     }
