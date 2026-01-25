@@ -9,6 +9,7 @@ import matchesRoutes from './routes/matches.routes.js';
 import statsRoutes from './routes/stats.routes.js';
 import { errorMiddleware } from './middlewares/error.middleware.js';
 import { requestIdMiddleware } from './middlewares/requestId.middleware.js';
+import { swaggerSpec, swaggerUiHandler, swaggerUiMiddleware } from './config/swagger.js';
 
 const app = express();
 
@@ -18,6 +19,8 @@ app.use(cookieParser());
 
 app.use('/api/auth', authRoutes);
 app.use('/api/health', healthRoutes);
+app.get('/api/docs.json', (_req, res) => res.json(swaggerSpec));
+app.use('/api/docs', swaggerUiMiddleware, swaggerUiHandler);
 app.use('/api/users', usersRoutes);
 app.use('/api/offers', offersRoutes);
 app.use('/api/requests', requestsRoutes);
