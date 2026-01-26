@@ -1,5 +1,6 @@
+import request from 'supertest';
 import { describe, expect, it } from 'vitest';
-import { createOffer, createUser, loginAgent } from './helpers.js';
+import { app, createOffer, createUser, loginAgent } from './helpers.js';
 import Offer from '../Models/Offer.js';
 
 const offerBody = {
@@ -105,6 +106,28 @@ describe('Offers', () => {
 
         const managerDel = await manager.delete(`/api/offers/${offerId}`);
         expect(managerDel.status).toBe(200);
+    });
+
+    it('list offers requires auth and forbids broker role', async () => {
+        await createUser({
+            name: 'Manager',
+            email: 'manager2@test.com',
+            password: 'Pass1234',
+            role: 'manager',
+        });
+        await createUser({
+            name: 'Broker',
+            email: 'broker2@test.com',
+            password: 'Pass1234',
+            role: 'broker',
+        });
+
+        const anonRes = await request(app).get('/api/offers');
+        expect(anonRes.status).toBe(401);
+
+        const broker = await loginAgent('broker2@test.com', 'Pass1234');
+        const brokerRes = await broker.get('/api/offers');
+        expect(brokerRes.status).toBe(403);
     });
 
     it('broker can read own offer and cannot read others', async () => {
