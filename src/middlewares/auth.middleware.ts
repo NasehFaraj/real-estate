@@ -1,7 +1,7 @@
 import type { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import type { JwtPayload } from 'jsonwebtoken';
-import { Role } from '../common/Role.js';
+import { Role, normalizeRole } from '../common/Role.js';
 import type { payload } from '../common/IPayload.js';
 import { env } from '../config/env.js';
 
@@ -34,7 +34,12 @@ export const refreshAuth = (req: Request, res: Response, next: NextFunction) => 
             return res.status(403).json({ success: false, message: 'الجلسة غير صالحة' });
         }
 
-        req.payload = decoded as payload;
+        const parsedRole = normalizeRole(decoded.role);
+        if (!parsedRole) {
+            return res.status(403).json({ success: false, message: 'الجلسة غير صالحة' });
+        }
+
+        req.payload = { ...(decoded as payload), role: parsedRole };
         return next();
     } catch (err) {
         if (err instanceof jwt.TokenExpiredError) {
@@ -69,7 +74,12 @@ export const requireAuth = (req: Request, res: Response, next: NextFunction) => 
             return res.status(403).json({ success: false, message: 'الجلسة غير صالحة' });
         }
 
-        req.payload = decoded as payload;
+        const parsedRole = normalizeRole(decoded.role);
+        if (!parsedRole) {
+            return res.status(403).json({ success: false, message: 'الجلسة غير صالحة' });
+        }
+
+        req.payload = { ...(decoded as payload), role: parsedRole };
         return next();
     } catch (err) {
         if (err instanceof jwt.TokenExpiredError) {

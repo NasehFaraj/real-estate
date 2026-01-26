@@ -3,6 +3,7 @@ import jwt from 'jsonwebtoken';
 import bcrypt from 'bcrypt';
 import User from '../Models/User.js';
 import type { payload } from '../common/IPayload.js';
+import { normalizeRole } from '../common/Role.js';
 import { isEmail, isNonEmptyString } from '../utils/validators.js';
 import { env } from '../config/env.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
@@ -76,11 +77,17 @@ export const login = asyncHandler(async (req: Request, res: Response) => {
         return;
     }
 
+    const parsedRole = normalizeRole(user.role);
+    if (!parsedRole) {
+        res.status(401).json({ success: false, message: 'الدور غير صالح' });
+        return;
+    }
+
     const data: payload = {
         id: user._id.toString(),
         email: user.email,
         name: user.name,
-        role: user.role,
+        role: parsedRole,
     };
 
     try {
