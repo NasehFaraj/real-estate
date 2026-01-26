@@ -1,6 +1,6 @@
 import { Types } from 'mongoose';
 import User from '../Models/User.js';
-import { Role } from '../common/Role.js';
+import { Role, normalizeRole } from '../common/Role.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { isEmail, isNonEmptyString } from '../utils/validators.js';
 
@@ -24,12 +24,13 @@ export const createUser = asyncHandler(async (req, res) => {
         return;
     }
 
-    if (role !== Role.MANAGER && role !== Role.BROKER) {
+    const parsedRole = normalizeRole(role);
+    if (parsedRole !== Role.MANAGER && parsedRole !== Role.BROKER) {
         res.status(400).json({ success: false, message: 'الدور غير صالح' });
         return;
     }
 
-    const user = await User.create({ name, phone, email, password, role });
+    const user = await User.create({ name, phone, email, password, role: parsedRole });
     const userObj = user.toObject();
     delete (userObj as { password?: string }).password;
 
