@@ -1,7 +1,7 @@
 import type { Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcrypt';
-import User from '../Models/User.js';
+import User, { type IUser } from '../Models/User.js';
 import type { payload } from '../common/IPayload.js';
 import { normalizeRole } from '../common/Role.js';
 import { isEmail, isNonEmptyString } from '../utils/validators.js';
@@ -31,13 +31,23 @@ const setRefreshTokenCookie = (res: Response, token: string) => {
     );
 };
 
-const generateTokens = (data: payload) => {
+const buildPayload = (user: IUser & { _id: unknown }, role: payload['role']): payload => {
+    return {
+        id: user._id.toString(),
+        email: user.email,
+        name: user.name,
+        role,
+    };
+};
+
+const generateTokens = (user: IUser & { _id: unknown }, role: payload['role']) => {
     const algorithm = env.algorithm as jwt.Algorithm;
     const accessExpiresIn = env.accessExpiresIn as Exclude<jwt.SignOptions['expiresIn'], undefined>;
     const refreshExpiresIn = env.refreshExpiresIn as Exclude<
         jwt.SignOptions['expiresIn'],
         undefined
     >;
+    const data = buildPayload(user, role);
 
     const accessToken = jwt.sign(data, env.jwtAccessSecret, {
         algorithm,
@@ -83,15 +93,8 @@ export const login = asyncHandler(async (req: Request, res: Response) => {
         return;
     }
 
-    const data: payload = {
-        id: user._id.toString(),
-        email: user.email,
-        name: user.name,
-        role: parsedRole,
-    };
-
     try {
-        const { accessToken, refreshToken } = generateTokens(data);
+        const { accessToken, refreshToken } = generateTokens(user, parsedRole);
         setRefreshTokenCookie(res, refreshToken);
         setAccessTokenCookie(res, accessToken);
 
@@ -106,13 +109,26 @@ export const login = asyncHandler(async (req: Request, res: Response) => {
 });
 
 export const getAccessToken = asyncHandler(async (req: Request, res: Response) => {
-    if (!req.payload) {
-        res.status(403).json({ success: false, message: 'الجلسة غير صالحة' });
+    const userId = req.payload?.id;
+    if (!userId) {
+        res.status(401).json({ success: false, message: 'الجلسة غير صالحة' });
         return;
     }
 
     try {
-        const { accessToken, refreshToken } = generateTokens(req.payload);
+        const user = await User.findById(userId).exec();
+        if (!user) {
+            res.status(401).json({ success: false, message: 'الجلسة غير صالحة' });
+            return;
+        }
+
+        const parsedRole = normalizeRole(user.role);
+        if (!parsedRole) {
+            res.status(401).json({ success: false, message: 'الجلسة غير صالحة' });
+            return;
+        }
+
+        const { accessToken, refreshToken } = generateTokens(user, parsedRole);
         setRefreshTokenCookie(res, refreshToken);
         setAccessTokenCookie(res, accessToken);
 
