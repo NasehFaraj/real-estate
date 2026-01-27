@@ -24,6 +24,19 @@ const toSameSite = (value: string | undefined): SameSiteValue => {
     return 'lax';
 };
 
+const toList = (value: string | undefined): string[] => {
+    if (!value) return [];
+    return value
+        .split(',')
+        .map((entry) => entry.trim())
+        .filter((entry) => entry.length > 0);
+};
+
+const toBoolean = (value: string | undefined): boolean => {
+    if (!value) return false;
+    return value === '1' || value.toLowerCase() === 'true';
+};
+
 export const env = {
     nodeEnv: process.env.NODE_ENV ?? 'development',
     port: toNumber(process.env.PORT, 3000),
@@ -40,4 +53,7 @@ export const env = {
         process.env.REFRESH_COOKIE_MAX_AGE_MS,
         30 * 24 * 60 * 60 * 1000
     ),
+    corsOrigins: toList(process.env.CORS_ORIGINS),
+    trustProxy: toBoolean(process.env.TRUST_PROXY),
+    authDebug: toBoolean(process.env.AUTH_DEBUG),
 };

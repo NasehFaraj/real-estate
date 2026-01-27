@@ -10,16 +10,37 @@ const getCookieName = (kind: 'access' | 'refresh') => {
     return env.refreshCookieName;
 };
 
+const getTokenFromCookiesHeader = (
+    cookieHeader: string | undefined,
+    cookieName: string
+): string | undefined => {
+    if (!cookieHeader) return undefined;
+    const cookies = cookieHeader.split(';').map((cookie) => cookie.trim());
+    const match = cookies.find((cookie) => cookie.startsWith(`${cookieName}=`));
+    if (!match) return undefined;
+    return match.substring(cookieName.length + 1);
+};
+
 const verifyToken = (token: string, secret: string) => {
     return jwt.verify(token, secret) as JwtPayload;
 };
 
 export const refreshAuth = (req: Request, res: Response, next: NextFunction) => {
     const cookieName = getCookieName('refresh');
-    const token = req.cookies?.[cookieName];
+    const token = req.cookies?.[cookieName] ?? getTokenFromCookiesHeader(req.headers.cookie, cookieName);
+
+    if (env.authDebug) {
+        const requestId = req.requestId ?? '-';
+        const cookieHeaderPresent = Boolean(req.headers.cookie);
+        const cookiesObjectPresent = Boolean(req.cookies);
+        const cookieKeys = req.cookies ? Object.keys(req.cookies) : [];
+        console.info(
+            `[refresh] ${requestId} cookieHeader=${cookieHeaderPresent} cookiesObject=${cookiesObjectPresent} cookieKeys=${cookieKeys.join(',') || '-'}`
+        );
+    }
 
     if (!token) {
-        return res.status(403).json({ success: false, message: 'الجلسة مفقودة' });
+        return res.status(401).json({ success: false, message: 'الجلسة مفقودة' });
     }
 
     try {
@@ -31,17 +52,22 @@ export const refreshAuth = (req: Request, res: Response, next: NextFunction) => 
             !decoded.id ||
             !decoded.name
         ) {
-            return res.status(403).json({ success: false, message: 'الجلسة غير صالحة' });
+            return res.status(401).json({ success: false, message: 'الجلسة غير صالحة' });
         }
 
         const parsedRole = normalizeRole(decoded.role);
         if (!parsedRole) {
-            return res.status(403).json({ success: false, message: 'الجلسة غير صالحة' });
+            return res.status(401).json({ success: false, message: 'الجلسة غير صالحة' });
         }
 
         req.payload = { ...(decoded as payload), role: parsedRole };
         return next();
     } catch (err) {
+        if (env.authDebug) {
+            const requestId = req.requestId ?? '-';
+            console.error(`[refresh] ${requestId} verify failed`);
+            console.error(err);
+        }
         if (err instanceof jwt.TokenExpiredError) {
             return res.status(401).json({ success: false, message: 'انتهت صلاحية الجلسة' });
         }
@@ -50,7 +76,7 @@ export const refreshAuth = (req: Request, res: Response, next: NextFunction) => 
             return res.status(401).json({ success: false, message: 'الجلسة غير صالحة' });
         }
 
-        return res.status(500).json({ success: false, message: 'خطأ داخلي في الخادم' });
+        return res.status(401).json({ success: false, message: 'الجلسة غير صالحة' });
     }
 };
 

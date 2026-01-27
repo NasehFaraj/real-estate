@@ -1,5 +1,6 @@
 import express from 'express';
 import cookieParser from 'cookie-parser';
+import cors from 'cors';
 import authRoutes from './routes/auth.routes.js';
 import healthRoutes from './routes/health.routes.js';
 import usersRoutes from './routes/users.routes.js';
@@ -10,10 +11,29 @@ import statsRoutes from './routes/stats.routes.js';
 import { errorMiddleware } from './middlewares/error.middleware.js';
 import { requestIdMiddleware } from './middlewares/requestId.middleware.js';
 import { swaggerSpec, swaggerUiHandler, swaggerUiMiddleware } from './config/swagger.js';
+import { env } from './config/env.js';
 
 const app = express();
 
+if (env.trustProxy) {
+    app.set('trust proxy', 1);
+}
+
 app.use(requestIdMiddleware);
+app.use(
+    cors({
+        origin: (origin, callback) => {
+            if (!origin) {
+                return callback(null, true);
+            }
+            if (env.corsOrigins.length === 0 || env.corsOrigins.includes(origin)) {
+                return callback(null, true);
+            }
+            return callback(new Error('Not allowed by CORS'));
+        },
+        credentials: true,
+    })
+);
 app.use(express.json());
 app.use(cookieParser());
 
