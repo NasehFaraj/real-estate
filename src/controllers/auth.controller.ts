@@ -31,7 +31,9 @@ const setRefreshTokenCookie = (res: Response, token: string) => {
     );
 };
 
-const buildPayload = (user: IUser & { _id: unknown }, role: payload['role']): payload => {
+type UserWithId = IUser & { _id: { toString: () => string } };
+
+const buildPayload = (user: UserWithId, role: payload['role']): payload => {
     return {
         id: user._id.toString(),
         email: user.email,
@@ -40,7 +42,7 @@ const buildPayload = (user: IUser & { _id: unknown }, role: payload['role']): pa
     };
 };
 
-const generateTokens = (user: IUser & { _id: unknown }, role: payload['role']) => {
+const generateTokens = (user: UserWithId, role: payload['role']) => {
     const algorithm = env.algorithm as jwt.Algorithm;
     const accessExpiresIn = env.accessExpiresIn as Exclude<jwt.SignOptions['expiresIn'], undefined>;
     const refreshExpiresIn = env.refreshExpiresIn as Exclude<
