@@ -10,10 +10,6 @@ services:
         volumes:
             - mongo_data:/data/db
         read_only: false
-        security_opt:
-            - no-new-privileges:true
-        cap_drop:
-            - ALL
         healthcheck:
             test:
                 [
