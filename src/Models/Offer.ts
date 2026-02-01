@@ -35,6 +35,6 @@ const OfferSchema = new Schema<IOffer>(
     { timestamps: true }
 );
 
-const Offer = mongoose.model<IOffer>('Offer', OfferSchema);
+const Offer = (mongoose.models.Offer as mongoose.Model<IOffer>) || mongoose.model<IOffer>('Offer', OfferSchema);
 
 export default Offer;

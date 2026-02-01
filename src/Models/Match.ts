@@ -19,6 +19,6 @@ const MatchSchema = new Schema<IMatch>(
     { timestamps: true }
 );
 
-const Match = mongoose.model<IMatch>('Match', MatchSchema);
+const Match = (mongoose.models.Match as mongoose.Model<IMatch>) || mongoose.model<IMatch>('Match', MatchSchema);
 
 export default Match;

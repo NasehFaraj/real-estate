@@ -28,7 +28,7 @@ describe('Requests', () => {
         });
         expect(res.status).toBe(201);
         expect(res.body.data.brokerName).toBe('Broker One');
-        expect(res.body.data.brokerId).toBe(broker._id.toString());
+        expect(res.body.data.brokerId).toBe(broker!._id.toString());
     });
 
     it('broker sees only own requests in /me', async () => {

@@ -32,6 +32,6 @@ UserSchema.pre('save', async function (this: HydratedDocument<IUser>) {
     this.password = await bcrypt.hash(this.password, saltRounds);
 });
 
-const User = mongoose.model<IUser>('User', UserSchema);
+const User = (mongoose.models.User as mongoose.Model<IUser>) || mongoose.model<IUser>('User', UserSchema);
 
 export default User;
