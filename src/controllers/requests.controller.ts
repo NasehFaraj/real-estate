@@ -4,6 +4,7 @@ import { Role } from '../common/Role.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { isNonEmptyString, isValidNumber } from '../utils/validators.js';
 import { buildFilter } from '../utils/filters.js';
+import { runMatchingForRequest } from '../utils/matching.js';
 
 const parseNumber = (value: unknown): number | null => {
     if (!isValidNumber(value)) return null;
@@ -74,6 +75,11 @@ export const createRequest = asyncHandler(async (req, res) => {
     };
 
     const request = await Request.create(data);
+
+    // Run matching asynchronously
+    runMatchingForRequest(request).catch((err) =>
+        console.error('Matching failed for request ' + request._id, err)
+    );
 
     res.status(201).json({ success: true, message: 'تمت الإضافة بنجاح', data: request });
 });

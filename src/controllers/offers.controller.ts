@@ -4,6 +4,7 @@ import { Role } from '../common/Role.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { isNonEmptyString, isValidNumber } from '../utils/validators.js';
 import { buildFilter } from '../utils/filters.js';
+import { runMatchingForOffer } from '../utils/matching.js';
 
 const parseNumber = (value: unknown): number | null => {
     if (!isValidNumber(value)) return null;
@@ -89,6 +90,11 @@ export const createOffer = asyncHandler(async (req, res) => {
     };
 
     const offer = await Offer.create(data);
+
+    // Run matching asynchronously
+    runMatchingForOffer(offer).catch((err) =>
+        console.error('Matching failed for offer ' + offer._id, err)
+    );
 
     res.status(201).json({ success: true, message: 'تمت الإضافة بنجاح', data: offer });
 });
