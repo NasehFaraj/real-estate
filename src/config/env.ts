@@ -56,4 +56,8 @@ export const env = {
     corsOrigins: toList(process.env.CORS_ORIGINS),
     trustProxy: toBoolean(process.env.TRUST_PROXY),
     authDebug: toBoolean(process.env.AUTH_DEBUG),
+    swaggerEnabled:
+        process.env.ENABLE_SWAGGER === undefined
+            ? (process.env.NODE_ENV ?? 'development') !== 'production'
+            : toBoolean(process.env.ENABLE_SWAGGER),
 };

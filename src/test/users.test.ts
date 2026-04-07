@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import request from 'supertest';
-import { app, createUser, loginAgent } from './helpers.js';
+import { createUser, loginAgent } from './helpers.js';
 
 describe('Users RBAC', () => {
     it('admin can create manager and broker', async () => {

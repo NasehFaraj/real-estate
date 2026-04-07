@@ -2,6 +2,9 @@ node_modules/
 dist/
 logs/
 .cache/
+.codex
+.github/.DS_Store
+.vscode/
 *.log
 .env
 .env.*

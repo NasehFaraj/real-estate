@@ -27,7 +27,8 @@ const verifyToken = (token: string, secret: string) => {
 
 export const refreshAuth = (req: Request, res: Response, next: NextFunction) => {
     const cookieName = getCookieName('refresh');
-    const token = req.cookies?.[cookieName] ?? getTokenFromCookiesHeader(req.headers.cookie, cookieName);
+    const token =
+        req.cookies?.[cookieName] ?? getTokenFromCookiesHeader(req.headers.cookie, cookieName);
 
     if (env.authDebug) {
         const requestId = req.requestId ?? '-';

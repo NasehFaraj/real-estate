@@ -48,7 +48,10 @@ export const runMatchingForOffer = async (offer: IOffer & { _id: Types.ObjectId 
                 });
             }
             // Create match for Request owner (if different)
-            if (req.brokerId && (!offer.brokerId || req.brokerId.toString() !== offer.brokerId.toString())) {
+            if (
+                req.brokerId &&
+                (!offer.brokerId || req.brokerId.toString() !== offer.brokerId.toString())
+            ) {
                 matchesToCreate.push({
                     offerId: offer._id,
                     requestId: req._id,
@@ -101,7 +104,10 @@ export const runMatchingForRequest = async (request: IRequest & { _id: Types.Obj
                 });
             }
             // Create match for Offer owner (if different)
-            if (off.brokerId && (!request.brokerId || off.brokerId.toString() !== request.brokerId.toString())) {
+            if (
+                off.brokerId &&
+                (!request.brokerId || off.brokerId.toString() !== request.brokerId.toString())
+            ) {
                 matchesToCreate.push({
                     offerId: off._id,
                     requestId: request._id,

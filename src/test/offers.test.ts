@@ -1,7 +1,6 @@
 import request from 'supertest';
 import { describe, expect, it } from 'vitest';
 import { app, createOffer, createUser, loginAgent } from './helpers.js';
-import Offer from '../Models/Offer.js';
 
 const offerBody = {
     propertyType: 'apartment',

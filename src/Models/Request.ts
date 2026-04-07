@@ -31,6 +31,8 @@ const RequestSchema = new Schema<IRequest>(
     { timestamps: true }
 );
 
-const Request = (mongoose.models.Request as mongoose.Model<IRequest>) || mongoose.model<IRequest>('Request', RequestSchema);
+const Request =
+    (mongoose.models.Request as mongoose.Model<IRequest>) ||
+    mongoose.model<IRequest>('Request', RequestSchema);
 
 export default Request;

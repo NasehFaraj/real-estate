@@ -40,8 +40,10 @@ app.use(cookieParser());
 
 app.use('/api/auth', authRoutes);
 app.use('/api/health', healthRoutes);
-app.get('/api/docs.json', (_req, res) => res.json(swaggerSpec));
-app.use('/api/docs', swaggerUiMiddleware, swaggerUiHandler);
+if (env.swaggerEnabled) {
+    app.get('/api/docs.json', (_req, res) => res.json(swaggerSpec));
+    app.use('/api/docs', swaggerUiMiddleware, swaggerUiHandler);
+}
 app.use('/api/users', usersRoutes);
 app.use('/api/offers', offersRoutes);
 app.use('/api/requests', requestsRoutes);
