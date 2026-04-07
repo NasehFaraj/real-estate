@@ -7,6 +7,7 @@ import {
     getRequestById,
     listMyRequests,
     listRequests,
+    updateRequest,
 } from '../controllers/requests.controller.js';
 
 /**
@@ -70,6 +71,17 @@ import {
  *     responses:
  *       200:
  *         description: Deleted
+ *   patch:
+ *     tags: [Requests]
+ *     summary: Update request
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: string }
+ *     responses:
+ *       200:
+ *         description: Updated
  */
 const router = Router();
 
@@ -77,6 +89,7 @@ router.post('/', accessMiddleware([Role.ADMIN, Role.MANAGER, Role.BROKER]), crea
 router.get('/', accessMiddleware([Role.ADMIN, Role.MANAGER]), listRequests);
 router.get('/me', accessMiddleware([Role.BROKER]), listMyRequests);
 router.get('/:id', accessMiddleware([Role.ADMIN, Role.MANAGER, Role.BROKER]), getRequestById);
+router.patch('/:id', accessMiddleware([Role.ADMIN, Role.MANAGER, Role.BROKER]), updateRequest);
 router.delete('/:id', accessMiddleware([Role.ADMIN, Role.MANAGER]), deleteRequest);
 
 export default router;

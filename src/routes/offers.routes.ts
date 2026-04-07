@@ -7,6 +7,7 @@ import {
     getOfferById,
     listMyOffers,
     listOffers,
+    updateOffer,
 } from '../controllers/offers.controller.js';
 
 /**
@@ -70,6 +71,17 @@ import {
  *     responses:
  *       200:
  *         description: Deleted
+ *   patch:
+ *     tags: [Offers]
+ *     summary: Update offer
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: string }
+ *     responses:
+ *       200:
+ *         description: Updated
  */
 const router = Router();
 
@@ -77,6 +89,7 @@ router.post('/', accessMiddleware([Role.ADMIN, Role.MANAGER, Role.BROKER]), crea
 router.get('/', accessMiddleware([Role.ADMIN, Role.MANAGER]), listOffers);
 router.get('/me', accessMiddleware([Role.BROKER]), listMyOffers);
 router.get('/:id', accessMiddleware([Role.ADMIN, Role.MANAGER, Role.BROKER]), getOfferById);
+router.patch('/:id', accessMiddleware([Role.ADMIN, Role.MANAGER, Role.BROKER]), updateOffer);
 router.delete('/:id', accessMiddleware([Role.ADMIN, Role.MANAGER]), deleteOffer);
 
 export default router;

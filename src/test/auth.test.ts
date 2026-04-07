@@ -35,4 +35,36 @@ describe('Auth', () => {
         const res = await agent.post('/api/auth/refresh');
         expect(res.status).toBe(200);
     });
+
+    it('me returns current user for authenticated session', async () => {
+        await createUser({
+            name: 'Manager',
+            email: 'manager@test.com',
+            password: 'Pass1234',
+            role: 'manager',
+        });
+        const agent = await loginAgent('manager@test.com', 'Pass1234');
+
+        const res = await agent.get('/api/auth/me');
+        expect(res.status).toBe(200);
+        expect(res.body.data.email).toBe('manager@test.com');
+        expect(res.body.data.role).toBe('manager');
+        expect(res.body.data.password).toBeUndefined();
+    });
+
+    it('logout clears session access for protected endpoints', async () => {
+        await createUser({
+            name: 'Broker',
+            email: 'broker@test.com',
+            password: 'Pass1234',
+            role: 'broker',
+        });
+        const agent = await loginAgent('broker@test.com', 'Pass1234');
+
+        const logoutRes = await agent.post('/api/auth/logout');
+        expect(logoutRes.status).toBe(200);
+
+        const meRes = await agent.get('/api/auth/me');
+        expect(meRes.status).toBe(401);
+    });
 });

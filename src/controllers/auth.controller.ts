@@ -31,6 +31,14 @@ const setRefreshTokenCookie = (res: Response, token: string) => {
     );
 };
 
+const clearAuthCookies = (res: Response) => {
+    res.clearCookie(env.accessCookieName, getCookieOptions(env.accessCookieMaxAgeMs, '/'));
+    res.clearCookie(
+        env.refreshCookieName,
+        getCookieOptions(env.refreshCookieMaxAgeMs, '/api/auth')
+    );
+};
+
 type UserWithId = IUser & { _id: { toString: () => string } };
 
 const buildPayload = (user: UserWithId, role: payload['role']): payload => {
@@ -138,4 +146,25 @@ export const getAccessToken = asyncHandler(async (req: Request, res: Response) =
     } catch (err) {
         throw new AppError('خطأ داخلي في الخادم', 500, err);
     }
+});
+
+export const getCurrentUser = asyncHandler(async (req: Request, res: Response) => {
+    const userId = req.payload?.id;
+    if (!userId) {
+        res.status(401).json({ success: false, message: 'الجلسة غير صالحة' });
+        return;
+    }
+
+    const user = await User.findById(userId).select('-password').lean().exec();
+    if (!user) {
+        res.status(401).json({ success: false, message: 'الجلسة غير صالحة' });
+        return;
+    }
+
+    res.json({ success: true, message: 'تم جلب البيانات بنجاح', data: user });
+});
+
+export const logout = asyncHandler(async (_req: Request, res: Response) => {
+    clearAuthCookies(res);
+    res.json({ success: true, message: 'تم تسجيل الخروج بنجاح' });
 });

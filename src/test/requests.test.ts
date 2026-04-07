@@ -112,4 +112,50 @@ describe('Requests', () => {
         const forbidRes = await broker1.get(`/api/requests/${req2.body.data._id}`);
         expect(forbidRes.status).toBe(403);
     });
+
+    it('broker can update own request and cannot change broker ownership fields', async () => {
+        await createUser({
+            name: 'Broker One',
+            email: 'broker1@test.com',
+            password: 'Pass1234',
+            role: 'broker',
+        });
+        const broker = await loginAgent('broker1@test.com', 'Pass1234');
+        const created = await createRequest(broker, requestBody);
+
+        const res = await broker.patch(`/api/requests/${created.body.data._id}`).send({
+            city: 'Damascus',
+            brokerName: 'Injected',
+            brokerId: '507f191e810c19729de860ea',
+        });
+
+        expect(res.status).toBe(200);
+        expect(res.body.data.city).toBe('Damascus');
+        expect(res.body.data.brokerName).toBe('Broker One');
+        expect(res.body.data.brokerId).toBe(created.body.data.brokerId);
+    });
+
+    it('broker cannot update another broker request', async () => {
+        await createUser({
+            name: 'Broker One',
+            email: 'broker1@test.com',
+            password: 'Pass1234',
+            role: 'broker',
+        });
+        await createUser({
+            name: 'Broker Two',
+            email: 'broker2@test.com',
+            password: 'Pass1234',
+            role: 'broker',
+        });
+        const broker1 = await loginAgent('broker1@test.com', 'Pass1234');
+        const broker2 = await loginAgent('broker2@test.com', 'Pass1234');
+        const created = await createRequest(broker2, requestBody);
+
+        const res = await broker1.patch(`/api/requests/${created.body.data._id}`).send({
+            city: 'Damascus',
+        });
+
+        expect(res.status).toBe(403);
+    });
 });
